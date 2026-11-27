@@ -43,7 +43,7 @@ module tb();
 
 	initial begin 
 		$dumpfile("wave.vcd");
-		$dumpvars(1, stim1.clk, tb_mismatch ,out_ref,out_dut );
+		$dumpvars(1, stim1.clk, out_ref,out_dut );
 	end
 
 

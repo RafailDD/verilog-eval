@@ -44,7 +44,7 @@ module tb();
 
 	initial begin 
 		$dumpfile("wave.vcd");
-		$dumpvars(1, stim1.clk, tb_mismatch ,in,parity_ref,parity_dut );
+		$dumpvars(1, stim1.clk, in,parity_ref,parity_dut );
 	end
 
 

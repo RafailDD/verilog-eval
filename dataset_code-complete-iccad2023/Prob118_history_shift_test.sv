@@ -139,7 +139,7 @@ module tb();
 
 	initial begin 
 		$dumpfile("wave.vcd");
-		$dumpvars(1, stim1.clk, tb_mismatch ,clk,areset,predict_valid,predict_taken,train_mispredicted,train_taken,train_history,predict_history_ref,predict_history_dut );
+		$dumpvars(1, stim1.clk, clk,areset,predict_valid,predict_taken,train_mispredicted,train_taken,train_history,predict_history_ref,predict_history_dut );
 	end
 
 

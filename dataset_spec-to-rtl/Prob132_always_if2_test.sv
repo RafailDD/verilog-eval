@@ -81,7 +81,7 @@ module tb();
 
 	initial begin 
 		$dumpfile("wave.vcd");
-		$dumpvars(1, stim1.clk, tb_mismatch ,cpu_overheated,arrived,gas_tank_empty,shut_off_computer_ref,shut_off_computer_dut,keep_driving_ref,keep_driving_dut );
+		$dumpvars(1, stim1.clk, cpu_overheated,arrived,gas_tank_empty,shut_off_computer_ref,shut_off_computer_dut,keep_driving_ref,keep_driving_dut );
 	end
 
 

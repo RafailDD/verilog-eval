@@ -83,7 +83,7 @@ module tb();
 
 	initial begin 
 		$dumpfile("wave.vcd");
-		$dumpvars(1, stim1.clk, tb_mismatch ,d,done_counting,ack,state,B3_next_ref,B3_next_dut,S_next_ref,S_next_dut,S1_next_ref,S1_next_dut,Count_next_ref,Count_next_dut,Wait_next_ref,Wait_next_dut,done_ref,done_dut,counting_ref,counting_dut,shift_ena_ref,shift_ena_dut );
+		$dumpvars(1, stim1.clk, d,done_counting,ack,state,B3_next_ref,B3_next_dut,S_next_ref,S_next_dut,S1_next_ref,S1_next_dut,Count_next_ref,Count_next_dut,Wait_next_ref,Wait_next_dut,done_ref,done_dut,counting_ref,counting_dut,shift_ena_ref,shift_ena_dut );
 	end
 
 

@@ -50,7 +50,7 @@ module tb();
 
 	initial begin 
 		$dumpfile("wave.vcd");
-		$dumpvars(1, stim1.clk, tb_mismatch ,a,b,sum_ref,sum_dut,cout_ref,cout_dut );
+		$dumpvars(1, stim1.clk, a,b,sum_ref,sum_dut,cout_ref,cout_dut );
 	end
 
 
