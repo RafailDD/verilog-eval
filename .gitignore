@@ -8,3 +8,7 @@
 build*/
 autom4te.cache/
 
+
+# local runs (run_local.sh)
+runs/
+.shim/
