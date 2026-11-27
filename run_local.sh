@@ -8,7 +8,7 @@
 #
 # Requires (checked before anything runs) — nothing to pip/apt install:
 #   - bash, make, timeout, curl
-#   - python3 (standard library only)
+#   - python3 >= 3.6 (standard library only)
 #   - iverilog 12.x or 13.x
 #   - Ollama running (default http://localhost:11434); the `ollama` CLI only
 #     if a model still has to be pulled
@@ -74,6 +74,15 @@ case "$ivver" in
       fi ;;
   *)  die "iverilog 12.x or 13.x required, found: $ivline" ;;
 esac
+
+python3 -c 'import sys; sys.exit(0 if sys.version_info >= (3, 6) else 1)' \
+  || die "python3 >= 3.6 required, found: $(python3 --version 2>&1)"
+
+# A ZIP download (instead of git clone) can drop the executable bits that
+# configure and the Makefile rely on; restore them.
+chmod +x "$REPO/configure" "$REPO"/scripts/sv-generate "$REPO"/scripts/sv-iv-analyze \
+         "$REPO"/scripts/echo-progress "$REPO"/selfcheck.sh "$REPO"/check_context.py 2>/dev/null \
+  || die "cannot make configure/scripts executable; run: chmod +x configure scripts/*"
 
 # The NVIDIA scripts start with '#!/usr/bin/env python'; many systems only
 # have 'python3'. A private shim makes 'python' resolve, without installing.

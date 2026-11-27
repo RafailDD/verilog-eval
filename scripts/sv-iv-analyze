@@ -25,7 +25,8 @@ import re
 import glob
 
 from collections import OrderedDict
-from dataclasses import dataclass
+# [local-llm patch] dataclasses needs Python 3.7+; a plain class (below)
+# does the same job and also runs on 3.6.
 
 # [local-llm patch] unused import removed (langchain.schema is gone in langchain >= 1.0)
 
@@ -59,13 +60,14 @@ def parse_cmdline():
 # Results
 #-------------------------------------------------------------------------
 
-@dataclass
 class ResultRecord:
-  passfail      : str    = '?'
-  num_mismatch  : int    = 0
-  prompt_tokens : int    = 0
-  resp_tokens   : int    = 0
-  cost          : float  = 0.0
+  def __init__( self, passfail='?', num_mismatch=0, prompt_tokens=0,
+                resp_tokens=0, cost=0.0 ):
+    self.passfail      = passfail
+    self.num_mismatch  = num_mismatch
+    self.prompt_tokens = prompt_tokens
+    self.resp_tokens   = resp_tokens
+    self.cost          = cost
 
 class Results:
 
@@ -352,9 +354,9 @@ def main():
 
       # Process logs and verilog for each sample
 
-      generate_log = f"{problem}/{problem}_sample{nsample:02}-sv-generate.log"
-      compile_log  = f"{problem}/{problem}_sample{nsample:02}-sv-iv-test.log"
-      verilog      = f"{problem}/{problem}_sample{nsample:02}.sv"
+      generate_log = f"{problem}/{problem}_sample{nsample}-sv-generate.log"
+      compile_log  = f"{problem}/{problem}_sample{nsample}-sv-iv-test.log"
+      verilog      = f"{problem}/{problem}_sample{nsample}.sv"
       analyze_result( results, problem, nsample, generate_log, compile_log, verilog )
 
   # Print summary
