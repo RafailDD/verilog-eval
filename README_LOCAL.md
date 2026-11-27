@@ -31,7 +31,7 @@ model is not useful for RTL work; passing them only earns a harder test
 Nothing to `pip` or `apt` install. You need:
 
 - `bash`, `make`, `curl`, `timeout`, `git`
-- `python3` (standard library only; no `python` command needed)
+- `python3` 3.6 or newer (standard library only; no `python` command needed)
 - `iverilog` 12.x or 13.x, plus its `vvp`
 - Ollama running (default `http://localhost:11434`); the `ollama` CLI only if a
   model still has to be pulled
