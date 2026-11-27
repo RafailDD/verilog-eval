@@ -31,10 +31,75 @@ import time
 from collections import namedtuple
 
 
-from langchain_nvidia_ai_endpoints import ChatNVIDIA
-from langchain_openai import ChatOpenAI
-from langchain.schema   import SystemMessage, HumanMessage
-from langchain.callbacks import get_openai_callback
+import contextlib
+
+# [local-llm patch] Tolerant imports: langchain >= 1.0 removed langchain.schema
+# and langchain.callbacks, and NVIDIA/OpenAI backends are optional.
+try:
+  from langchain_core.messages import SystemMessage, HumanMessage
+except ImportError:
+  # Ollama path needs no langchain at all; plain stand-ins are enough.
+  class SystemMessage:
+    def __init__(self, content): self.content = content
+  class HumanMessage:
+    def __init__(self, content): self.content = content
+try:
+  from langchain_nvidia_ai_endpoints import ChatNVIDIA
+except ImportError:
+  ChatNVIDIA = None
+try:
+  from langchain_openai import ChatOpenAI
+except ImportError:
+  ChatOpenAI = None
+try:
+  from langchain_community.callbacks import get_openai_callback
+except ImportError:
+  get_openai_callback = None
+import json
+import urllib.request
+import urllib.error
+
+class OllamaChat:
+  """[local-llm patch] Minimal Ollama /api/chat client, Python stdlib only."""
+  def __init__(self, model, base_url, options, think, keep_alive="10m", timeout=1800):
+    self.model, self.base_url = model, base_url.rstrip("/")
+    self.options, self.think = options, think
+    self.keep_alive, self.timeout = keep_alive, timeout
+  def invoke(self, msgs):
+    roles = {SystemMessage: "system", HumanMessage: "user"}
+    body = {"model": self.model, "stream": False, "keep_alive": self.keep_alive,
+            "options": self.options,
+            "messages": [{"role": roles.get(type(m), "user"), "content": m.content} for m in msgs]}
+    if self.think is not None:
+      body["think"] = self.think
+    req = urllib.request.Request(self.base_url + "/api/chat", data=json.dumps(body).encode(),
+                                 headers={"Content-Type": "application/json"})
+    try:
+      with urllib.request.urlopen(req, timeout=self.timeout) as r:
+        data = json.loads(r.read())
+    except urllib.error.HTTPError as e:
+      err = e.read().decode(errors="replace")
+      if "think" in body and "does not support thinking" in err:
+        self.think = None            # non-thinking model: retry without the flag
+        return self.invoke(msgs)
+      raise RuntimeError(f"Ollama HTTP {e.code}: {err}")
+    if "error" in data:
+      raise RuntimeError(data["error"])
+    msg = data.get("message", {}) or {}
+    resp = namedtuple("Response", ["content", "response_metadata"])
+    return resp(content=msg.get("content", ""), response_metadata=data)
+
+class _NoCallback:
+  prompt_tokens = completion_tokens = total_tokens = 0
+  total_cost = 0
+
+@contextlib.contextmanager
+def _token_callback(use_openai):
+  if use_openai and get_openai_callback is not None:
+    with get_openai_callback() as cb:
+      yield cb
+  else:
+    yield _NoCallback()
 
 #-------------------------------------------------------------------------
 # Command line processing
@@ -238,7 +303,10 @@ def main():
   if opts.model in model_aliases:
     model = model_aliases[opts.model]
 
-  if model not in openai_models + nim_chat_models + manual_models:
+  # [local-llm patch] any "ollama/<name>" model is accepted, e.g. ollama/qwen2.5-coder:7b
+  is_ollama = model.startswith("ollama/")
+
+  if not is_ollama and model not in openai_models + nim_chat_models + manual_models:
     print("")
     print(f"ERROR: Unknown model {model}")
     print("")
@@ -267,7 +335,7 @@ def main():
 
   temperature = opts.temperature
   top_p       = opts.top_p
-  max_tokens  = opts.max_tokens
+  max_tokens  = int(os.environ.get("VEVAL_MAX_TOKENS", opts.max_tokens))
 
   out.print( "" )
   out.print( f"problem     = {problem}"     )
@@ -349,7 +417,21 @@ def main():
 
   # Query the LLM
 
-  if model in openai_models:
+  if is_ollama:
+    # [local-llm patch] Native Ollama API so num_ctx and thinking can be set.
+    think = os.environ.get("VEVAL_THINK", "off").lower()
+    host = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
+    if not host.startswith("http"):
+      host = "http://" + host
+    llm = OllamaChat(
+      model   = model[len("ollama/"):],
+      base_url = host,
+      options = dict(temperature = temperature, top_p = top_p,
+                     num_predict = max_tokens,
+                     num_ctx = int(os.environ.get("OLLAMA_NUM_CTX", "8192"))),
+      think   = {"on": True, "off": False}.get(think),   # "default" -> don't send
+    )
+  elif model in openai_models:
     llm = ChatOpenAI(
       model       = model,
       temperature = temperature,
@@ -376,7 +458,7 @@ def main():
   if model not in manual_models:
     for _ in range(10):
       try:
-        with get_openai_callback() as cb:
+        with _token_callback(model in openai_models) as cb:
           resp = llm.invoke(msgs)
           break
       except Exception as e:
@@ -412,13 +494,33 @@ def main():
   out.print("Statistics")
   out.print("-"*74)
 
+  # [local-llm patch] Real token counts and stop reason from Ollama, so
+  # truncation (context or max_tokens) can be detected afterwards.
+  done_reason = "n/a"
+  if is_ollama:
+    md = getattr(resp, "response_metadata", {}) or {}
+    cb = _NoCallback()
+    cb.prompt_tokens     = int(md.get("prompt_eval_count") or 0)
+    cb.completion_tokens = int(md.get("eval_count") or 0)
+    cb.total_tokens      = cb.prompt_tokens + cb.completion_tokens
+    done_reason          = md.get("done_reason") or "unknown"
+
   out.print("")
   out.print(f"prompt_tokens = {cb.prompt_tokens}")
   out.print(f"resp_tokens   = {cb.completion_tokens}")
   out.print(f"total_tokens  = {cb.total_tokens}")
   out.print(f"total_cost    = {cb.total_cost}")
+  out.print(f"done_reason   = {done_reason}")
+  out.print(f"num_ctx       = {os.environ.get('OLLAMA_NUM_CTX', 'n/a') if is_ollama else 'n/a'}")
+  out.print(f"max_tokens    = {max_tokens}")
   out.print("")
 
+
+  # [local-llm patch] Drop any reasoning text so it can't confuse extraction.
+  _content = re.sub(r"<think>.*?</think>", "", resp.content or "", flags=re.S)
+  if "<think>" in _content:   # unterminated think block (hit max_tokens)
+    _content = _content.split("<think>")[0]
+  resp = namedtuple('Response', ['content'])(content=_content)
 
   # Extract code from response
   file = open( opts.output, 'w' )

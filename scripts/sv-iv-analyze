@@ -27,7 +27,7 @@ import glob
 from collections import OrderedDict
 from dataclasses import dataclass
 
-from langchain.schema   import SystemMessage, HumanMessage
+# [local-llm patch] unused import removed (langchain.schema is gone in langchain >= 1.0)
 
 #-------------------------------------------------------------------------
 # Command line processing
