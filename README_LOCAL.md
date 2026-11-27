@@ -91,8 +91,10 @@ them. On both iverilog 12.0 and 13.0:
 - `code-complete-iccad2023`: **153/156** (Prob082, 141, 156)
 
 Prob099's spec-to-rtl reference has the wrong ports; the other three hit the
-testbench's own time limit. Run `./selfcheck.sh <task>` to recompute the list
-on your iverilog.
+testbench's own time limit. `./selfcheck.sh <task>` recomputes the list on
+your iverilog: it prints `known-bad` for these and ends with
+`OK: matches the expected result`. Any problem marked `UNEXPECTED`
+points to a setup issue.
 
 ### Is a failure caused by context size?
 

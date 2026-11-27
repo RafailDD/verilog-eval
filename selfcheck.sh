@@ -23,5 +23,27 @@ while read -r p; do
     fails+=("$p")
   fi
 done < "$ds/problems.txt"
-echo "$task: $((n-${#fails[@]}))/$n reference solutions pass the harness check"
-for f in "${fails[@]}"; do echo "  FAIL $f"; done
+# Problems known to fail with the reference answer itself (iverilog 12.0 and
+# 13.0): Prob099 spec-to-rtl has wrong ports; 082/141/156 hit the
+# testbench's own time limit. These cap the best possible score.
+case "$task" in
+  spec-to-rtl)             known="Prob082_lfsr32 Prob099_m2014_q6c Prob141_count_clock Prob156_review2015_fancytimer" ;;
+  code-complete-iccad2023) known="Prob082_lfsr32 Prob141_count_clock Prob156_review2015_fancytimer" ;;
+  *)                       known="" ;;
+esac
+pass=$((n-${#fails[@]}))
+echo "$task: $pass/$n reference solutions pass -> best possible score $pass/$n"
+unexpected=0
+for f in "${fails[@]}"; do
+  if [[ " $known " == *" $f "* ]]; then
+    echo "  known-bad $f"
+  else
+    echo "  UNEXPECTED $f"; unexpected=1
+  fi
+done
+if [[ $unexpected == 0 ]]; then
+  echo "OK: matches the expected result, your setup is fine."
+else
+  echo "WARNING: failures beyond the known list; check your iverilog setup."
+  exit 1
+fi
