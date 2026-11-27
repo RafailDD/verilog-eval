@@ -75,6 +75,12 @@ case "$ivver" in
   *)  die "iverilog 12.x or 13.x required, found: $ivline" ;;
 esac
 
+# A ZIP download (instead of git clone) can drop the executable bits that
+# configure and the Makefile rely on; restore them.
+chmod +x "$REPO/configure" "$REPO"/scripts/sv-generate "$REPO"/scripts/sv-iv-analyze \
+         "$REPO"/scripts/echo-progress "$REPO"/selfcheck.sh "$REPO"/check_context.py 2>/dev/null \
+  || die "cannot make configure/scripts executable; run: chmod +x configure scripts/*"
+
 # The NVIDIA scripts start with '#!/usr/bin/env python'; many systems only
 # have 'python3'. A private shim makes 'python' resolve, without installing.
 mkdir -p "$REPO/.shim"
