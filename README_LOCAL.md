@@ -41,8 +41,10 @@ Nothing to `pip` or `apt` install. You need:
 ## Quick start
 
 ```bash
-git clone -b local-llm-ollama https://github.com/RafailDD/verilog-eval.git
+git clone https://github.com/RafailDD/verilog-eval.git
 cd verilog-eval
+# downloaded as a ZIP instead? run `chmod +x run_local.sh` first
+# (run_local.sh restores the other scripts' permissions itself)
 
 ./selfcheck.sh                                    # reference solutions vs your iverilog
 QUICK=1 SHOTS=0 ./run_local.sh qwen2.5-coder:7b   # 20-problem smoke test
@@ -113,7 +115,8 @@ and stop reason Ollama returned for every request:
 | `len_hit` | answer stopped at the cap (`done_reason=length`) |
 | `no_code` | no usable module extracted |
 | `no_counts` | Ollama returned no counts: can't verify those samples |
-| `fail_by_trunc` | failures that also have one of the flags above |
+| `fail_by_trunc` | failures that also have `ctx_hit` or `len_hit` |
+| `fail_no_code` | failures where nothing was cut off, but no module could be extracted (answer format problem) |
 
 If `fail_by_trunc` is 0, no failure in that run is due to context or length.
 
