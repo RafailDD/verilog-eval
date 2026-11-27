@@ -204,7 +204,7 @@ module tb();
 
 	initial begin 
 		$dumpfile("wave.vcd");
-		$dumpvars(1, stim1.clk, tb_mismatch ,clk,areset,bump_left,bump_right,ground,dig,walk_left_ref,walk_left_dut,walk_right_ref,walk_right_dut,aaah_ref,aaah_dut,digging_ref,digging_dut );
+		$dumpvars(1, stim1.clk, clk,areset,bump_left,bump_right,ground,dig,walk_left_ref,walk_left_dut,walk_right_ref,walk_right_dut,aaah_ref,aaah_dut,digging_ref,digging_dut );
 	end
 
 

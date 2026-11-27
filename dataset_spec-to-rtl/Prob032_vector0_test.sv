@@ -78,7 +78,7 @@ module tb();
 
 	initial begin 
 		$dumpfile("wave.vcd");
-		$dumpvars(1, stim1.clk, tb_mismatch ,vec,outv_ref,outv_dut,o2_ref,o2_dut,o1_ref,o1_dut,o0_ref,o0_dut );
+		$dumpvars(1, stim1.clk, vec,outv_ref,outv_dut,o2_ref,o2_dut,o1_ref,o1_dut,o0_ref,o0_dut );
 	end
 
 

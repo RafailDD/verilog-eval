@@ -104,7 +104,7 @@ module tb();
 
 	initial begin 
 		$dumpfile("wave.vcd");
-		$dumpvars(1, stim1.clk, tb_mismatch ,mode,too_cold,too_hot,fan_on,heater_ref,heater_dut,aircon_ref,aircon_dut,fan_ref,fan_dut );
+		$dumpvars(1, stim1.clk, mode,too_cold,too_hot,fan_on,heater_ref,heater_dut,aircon_ref,aircon_dut,fan_ref,fan_dut );
 	end
 
 

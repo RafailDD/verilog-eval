@@ -70,7 +70,7 @@ module tb();
 
 	initial begin 
 		$dumpfile("wave.vcd");
-		$dumpvars(1, stim1.clk, tb_mismatch ,ring,vibrate_mode,ringer_ref,ringer_dut,motor_ref,motor_dut );
+		$dumpvars(1, stim1.clk, ring,vibrate_mode,ringer_ref,ringer_dut,motor_ref,motor_dut );
 	end
 
 
